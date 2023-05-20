@@ -678,7 +678,12 @@ rrmFillBeaconIes( tpAniSirGlobal pMac,
                   tANI_U8 *eids, tANI_U8 numEids,
                   tpSirBssDescription pBssDesc )
 {
+<<<<<<< HEAD
    tANI_U8 len, *pBcnIes, BcnNumIes, count = 0, i;
+=======
+   tANI_U8 len, *pBcnIes, count = 0, i;
+   tANI_U16 BcnNumIes = 0;
+>>>>>>> FETCH_HEAD
 
    if( (pIes == NULL) || (pNumIes == NULL) || (pBssDesc == NULL) )
    {
@@ -703,12 +708,28 @@ rrmFillBeaconIes( tpAniSirGlobal pMac,
    *((tANI_U16*)pIes) = pBssDesc->capabilityInfo;
    *pNumIes+=sizeof(tANI_U16); pIes+=sizeof(tANI_U16);
 
+<<<<<<< HEAD
    while ( BcnNumIes > 0 )
    {
       len = *(pBcnIes + 1) + 2; //element id + length.
       limLog( pMac, LOG3, "EID = %d, len = %d total = %d",
              *pBcnIes, *(pBcnIes+1), len );
 
+=======
+   while ( BcnNumIes >= 2 )
+   {
+      len = *(pBcnIes + 1); //element id + length.
+      len += 2;
+      limLog( pMac, LOG3, "EID = %d, len = %d total = %d",
+             *pBcnIes, *(pBcnIes+1), len );
+
+      if (BcnNumIes < len || len <= 2) {
+          limLog(pMac, LOGE, "RRM: Invalid IE len:%d exp_len:%d",
+                 len, BcnNumIes);
+          break;
+      }
+
+>>>>>>> FETCH_HEAD
       i = 0;
       do
       {

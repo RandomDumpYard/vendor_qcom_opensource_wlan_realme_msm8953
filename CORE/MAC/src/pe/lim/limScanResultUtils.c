@@ -709,7 +709,11 @@ limLookupNaddHashEntry(tpAniSirGlobal pMac,
     tANI_U8                found = false;
     tLimScanResultNode *ptemp, *pprev;
     tSirMacCapabilityInfo *pSirCap, *pSirCapTemp;
+<<<<<<< HEAD
     int idx, len;
+=======
+    int len, elem_id, elem_len;
+>>>>>>> FETCH_HEAD
     tANI_U8 *pbIe;
     tANI_S8  rssi = 0;
 
@@ -757,6 +761,7 @@ limLookupNaddHashEntry(tpAniSirGlobal pMac,
                    rssi = ptemp->bssDescription.rssi;
                 }
 
+<<<<<<< HEAD
                 if(pBssDescr->bssDescription.fProbeRsp != ptemp->bssDescription.fProbeRsp)
                 {
                     //We get a different, save the old frame WSC IE if it is there
@@ -782,6 +787,46 @@ limLookupNaddHashEntry(tpAniSirGlobal pMac,
                         }
                         idx += pbIe[1] + 2;
                         pbIe += pbIe[1] + 2;
+=======
+                if(pBssDescr->bssDescription.fProbeRsp !=
+                                             ptemp->bssDescription.fProbeRsp)
+                {
+                    //We get a different, save the old frame WSC IE if it is there
+                    len = ptemp->bssDescription.length -
+                                 sizeof(tSirBssDescription) +
+                                 sizeof(tANI_U16) + sizeof(tANI_U32);
+                    pbIe = (tANI_U8 *)ptemp->bssDescription.ieFields;
+                    //Save WPS IE if it exists
+                    pBssDescr->bssDescription.WscIeLen = 0;
+                    while (len >= 2)
+                    {
+                        elem_id = pbIe[0];
+                        elem_len = pbIe[1];
+                        len -= 2;
+                        if (elem_len > len) {
+                            limLog(pMac, LOGW, FL("Invalid eid: %d elem_len: %d left: %d"),
+                                   elem_id, elem_len, len);
+                            return eHAL_STATUS_FAILURE;
+                        }
+                        if ((elem_id == DOT11F_EID_WSCPROBERES) &&
+                            (elem_len >= DOT11F_IE_WSCPROBERES_MIN_LEN) &&
+                            ((pbIe[2] == 0x00) && (pbIe[3] == 0x50) &&
+                             (pbIe[4] == 0xf2) &&
+                             (pbIe[5] == 0x04)))
+                        {
+                            if((elem_len + 2) <= WSCIE_PROBE_RSP_LEN)
+                            {
+                                vos_mem_copy(
+                                        pBssDescr->bssDescription.WscIeProbeRsp,
+                                        pbIe, elem_len + 2);
+                                pBssDescr->bssDescription.WscIeLen =
+                                                          elem_len + 2;
+                            }
+                            break;
+                        }
+                        len -= elem_len;
+                        pbIe += (elem_len + 2);
+>>>>>>> FETCH_HEAD
                     }
                 }
                 /*

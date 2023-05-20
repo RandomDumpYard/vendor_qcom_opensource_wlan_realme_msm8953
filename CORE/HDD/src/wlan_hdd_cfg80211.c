@@ -105,7 +105,19 @@
 #define a_mode_rates_size (8)
 #define FREQ_BASE_80211G          (2407)
 #define FREQ_BAND_DIFF_80211G     (5)
+<<<<<<< HEAD
 #define MAX_SCAN_SSID 9
+=======
+#ifndef VENDOR_EDIT
+//Modify for scan more hidden AP
+/*
+#define MAX_SCAN_SSID 9
+*/
+#else /* VENDOR_EDIT */
+#define MAX_SCAN_SSID 16
+#endif /* VENDOR_EDIT */
+
+>>>>>>> FETCH_HEAD
 #define MAX_PENDING_LOG 5
 #define GET_IE_LEN_IN_BSS_DESC(lenInBss) ( lenInBss + sizeof(lenInBss) - \
         ((uintptr_t)OFFSET_OF( tSirBssDescription, ieFields)))
@@ -304,7 +316,12 @@ static struct ieee80211_supported_band wlan_hdd_band_2_4_GHZ =
     .ht_cap.cap            =  IEEE80211_HT_CAP_SGI_20
                             | IEEE80211_HT_CAP_GRN_FLD
                             | IEEE80211_HT_CAP_DSSSCCK40
+<<<<<<< HEAD
                             | IEEE80211_HT_CAP_LSIG_TXOP_PROT,
+=======
+                            | IEEE80211_HT_CAP_LSIG_TXOP_PROT
+                            | IEEE80211_HT_CAP_SUP_WIDTH_20_40,
+>>>>>>> FETCH_HEAD
     .ht_cap.ampdu_factor   = IEEE80211_HT_MAX_AMPDU_64K,
     .ht_cap.ampdu_density  = IEEE80211_HT_MPDU_DENSITY_16,
     .ht_cap.mcs.rx_mask    = { 0xff, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
@@ -1916,6 +1933,10 @@ static v_BOOL_t put_wifi_peer_info( tpSirWifiPeerInfo stats,
                                             stats->rateStats +
                                        (i * sizeof(tSirWifiRateStat)));
         rates = nla_nest_start(vendor_event, i);
+<<<<<<< HEAD
+=======
+
+>>>>>>> FETCH_HEAD
         if(!rates)
             return FALSE;
 
@@ -2401,10 +2422,17 @@ static v_VOID_t hdd_link_layer_process_peer_stats(hdd_adapter_t *pAdapter,
             return;
         }
 
+<<<<<<< HEAD
         pWifiPeerInfo = (tpSirWifiPeerInfo)  ((uint8 *)
                 pWifiPeerStat->peerInfo +
                 (i * sizeof(tSirWifiPeerInfo)) +
                 (numRate * sizeof (tSirWifiRateStat)));
+=======
+        pWifiPeerInfo = (tpSirWifiPeerInfo)((uint8 *)pWifiPeerInfo +
+                (sizeof(tSirWifiPeerInfo) - sizeof(tSirWifiRateStat)) +
+                (numRate * sizeof(tSirWifiRateStat)));
+
+>>>>>>> FETCH_HEAD
         nla_nest_end(vendor_event, peers);
     }
     nla_nest_end(vendor_event, peerInfo);
@@ -8078,6 +8106,153 @@ static int __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
     return ret_val;
 }
 
+<<<<<<< HEAD
+=======
+#ifdef VENDOR_EDIT
+//Add for: hotspot manager
+static const struct nla_policy
+oppo_attr_policy[OPPO_WLAN_VENDOR_ATTR_MAX + 1] = {
+	[OPPO_WLAN_VENDOR_ATTR_MAC_ADDR] = {.type = NLA_BINARY, .len = VOS_MAC_ADDR_SIZE},
+	[OPPO_WLAN_VENDOR_ATTR_WETHER_BLOCK_CLIENT] = {.type = NLA_U8},
+	[OPPO_WLAN_VENDOR_ATTR_SAP_MAX_CLIENT_NUM] = {.type = NLA_U32},
+};
+
+static int __wlan_hdd_cfg80211_oppo_modify_acl(struct wiphy *wiphy,
+					struct wireless_dev *wdev,
+					const void *data, int data_len)
+{
+	int32_t status;
+	struct nlattr* tb[OPPO_WLAN_VENDOR_ATTR_MAX + 1];
+	uint8_t extra[8];
+	int8_t block;
+
+	ENTER();
+
+	status = nla_parse(tb, OPPO_WLAN_VENDOR_ATTR_MAX,
+					data, data_len, oppo_attr_policy);
+	if (status) {
+		hddLog(LOGE,"Invalid attributes!");
+		status = -EINVAL;
+		goto out;
+	}
+
+	if (tb[OPPO_WLAN_VENDOR_ATTR_MAC_ADDR]) {
+		nla_memcpy(extra, tb[OPPO_WLAN_VENDOR_ATTR_MAC_ADDR], VOS_MAC_ADDR_SIZE);
+	} else {
+		hddLog(LOGE,"Invalid argument:No sta mac addr provided!");
+		status = -EINVAL;
+		goto out;
+	}
+	if (tb[OPPO_WLAN_VENDOR_ATTR_WETHER_BLOCK_CLIENT]) {
+		block = nla_get_u8(tb[OPPO_WLAN_VENDOR_ATTR_WETHER_BLOCK_CLIENT]);
+	} else {
+		hddLog(LOGE,"Invalid argument:No block value!");
+		status = -EINVAL;
+		goto out;
+	}
+
+	//we always modify black list, as for now
+	extra[6] = 0;
+	extra[7] = block;
+
+	status = oppo_wlan_hdd_modify_acl(wdev->netdev, (char*)extra);
+	if (0 != status) {
+		hddLog(LOGE,"failed to modify acl! %d", status);
+		goto out;
+	}
+
+out:
+	EXIT();
+	return status;
+}
+
+/**
+ * wlan_hdd_cfg80211_oppo_modify_acl() - modify acl
+ * @wiphy: Pointer to wiphy
+ * @wdev: Pointer to wireless device
+ * @data: vendor command extra data
+ * @data_len: the size of extra data
+ *
+ * Return: 0 for success, non-zero for failure
+ */
+static int wlan_hdd_cfg80211_oppo_modify_acl(struct wiphy *wiphy,
+				  struct wireless_dev *wdev,
+				  const void *data, int data_len)
+{
+	int ret;
+
+	vos_ssr_protect(__func__);
+	ret = __wlan_hdd_cfg80211_oppo_modify_acl(wiphy, wdev, data, data_len);
+	vos_ssr_unprotect(__func__);
+
+	return ret;
+}
+
+static int __wlan_hdd_cfg80211_oppo_set_max_assoc(struct wiphy *wiphy,
+					  struct wireless_dev *wdev,
+					  const void *data, int data_len)
+{
+	uint32_t status;
+	int extra[2];
+	uint32_t max_clients;
+	struct nlattr* tb[OPPO_WLAN_VENDOR_ATTR_MAX + 1];
+
+	ENTER();
+
+	status = nla_parse(tb, OPPO_WLAN_VENDOR_ATTR_MAX,
+					data, data_len, oppo_attr_policy);
+
+	if (status) {
+		hddLog(LOGE,"Invalid attributes!");
+		status = -EINVAL;
+		goto out;
+	}
+
+	if (tb[OPPO_WLAN_VENDOR_ATTR_SAP_MAX_CLIENT_NUM]) {
+		max_clients = nla_get_u32(tb[OPPO_WLAN_VENDOR_ATTR_SAP_MAX_CLIENT_NUM]);
+	} else {
+		hddLog(LOGE,"Invalid argument!");
+		status = -EINVAL;
+		goto out;
+	}
+
+	extra[0] = QCSAP_PARAM_MAX_ASSOC;
+	extra[1] = max_clients;
+
+	status = oppo_wlan_hdd_set_max_assoc(wdev->netdev, (char*)extra);
+	if (0 != status) {
+		hddLog(LOGE,"failed to set max assoc!");
+		goto out;
+	}
+
+out:
+	EXIT();
+	return status;
+}
+
+/**
+ * wlan_hdd_cfg80211_oppo_set_max_assoc() - modify acl
+ * @wiphy: Pointer to wiphy
+ * @wdev: Pointer to wireless device
+ * @data: vendor command extra data
+ * @data_len: the size of extra data
+ *
+ * Return: 0 for success, non-zero for failure
+ */
+static int wlan_hdd_cfg80211_oppo_set_max_assoc(struct wiphy *wiphy,
+					  struct wireless_dev *wdev,
+					  const void *data, int data_len)
+{
+	int ret;
+	vos_ssr_protect(__func__);
+	ret = __wlan_hdd_cfg80211_oppo_set_max_assoc(wiphy, wdev, data, data_len);
+	vos_ssr_unprotect(__func__);
+
+	return ret;
+}
+#endif /* VENDOR_EDIT */
+
+>>>>>>> FETCH_HEAD
 /**
  * wlan_hdd_cfg80211_wifi_configuration_set() - Wifi configuration
  * vendor command
@@ -8894,6 +9069,29 @@ const struct wiphy_vendor_command hdd_wiphy_vendor_commands[] =
                  WIPHY_VENDOR_CMD_NEED_NETDEV,
         .doit = wlan_hdd_cfg80211_get_logger_supp_feature
    },
+<<<<<<< HEAD
+=======
+
+#ifdef VENDOR_EDIT
+   //add for: hotspot manager via wificond
+   {
+       .info.vendor_id = QCA_NL80211_VENDOR_ID,
+       .info.subcmd = OPPO_NL80211_VENDOR_SUBCMD_MODIFY_ACL,
+       .flags = WIPHY_VENDOR_CMD_NEED_WDEV |
+            WIPHY_VENDOR_CMD_NEED_NETDEV |
+            WIPHY_VENDOR_CMD_NEED_RUNNING,
+       .doit = wlan_hdd_cfg80211_oppo_modify_acl
+   },
+   {
+       .info.vendor_id = QCA_NL80211_VENDOR_ID,
+       .info.subcmd = OPPO_NL80211_VENDOR_SUBCMD_SET_MAX_ASSOC,
+       .flags = WIPHY_VENDOR_CMD_NEED_WDEV |
+            WIPHY_VENDOR_CMD_NEED_NETDEV |
+            WIPHY_VENDOR_CMD_NEED_RUNNING,
+       .doit = wlan_hdd_cfg80211_oppo_set_max_assoc
+   },
+#endif /* VENDOR_EDIT */
+>>>>>>> FETCH_HEAD
 };
 
 /* vendor specific events */
@@ -10857,6 +11055,11 @@ int wlan_hdd_restore_channels(hdd_context_t *hdd_ctx)
 
 		for (band_num = 0; band_num < HDD_NUM_NL80211_BANDS;
 		     band_num++) {
+<<<<<<< HEAD
+=======
+			if (!wiphy->bands[band_num])
+				continue;
+>>>>>>> FETCH_HEAD
 			for (channel_num = 0; channel_num <
 				wiphy->bands[band_num]->n_channels;
 				channel_num++) {
@@ -10936,6 +11139,11 @@ static int wlan_hdd_disable_channels(hdd_context_t *hdd_ctx)
 
 		for (band_num = 0; band_num < HDD_NUM_NL80211_BANDS;
 							band_num++) {
+<<<<<<< HEAD
+=======
+			if (!wiphy->bands[band_num])
+				continue;
+>>>>>>> FETCH_HEAD
 			for (band_ch_num = 0; band_ch_num <
 					wiphy->bands[band_num]->n_channels;
 					band_ch_num++) {
@@ -12294,8 +12502,13 @@ int __wlan_hdd_cfg80211_change_iface( struct wiphy *wiphy,
     struct wireless_dev *wdev;
     hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR( ndev );
     hdd_context_t *pHddCtx;
+<<<<<<< HEAD
     hdd_adapter_t  *pP2pAdapter = NULL;
     tCsrRoamProfile *pRoamProfile = NULL;
+=======
+    tCsrRoamProfile *pRoamProfile = NULL;
+    hdd_adapter_t  *pP2pAdapter = NULL;
+>>>>>>> FETCH_HEAD
     eCsrRoamBssType LastBSSType;
     hdd_config_t *pConfig = NULL;
     eMib_dot11DesiredBssType connectedBssType;
@@ -12460,6 +12673,7 @@ int __wlan_hdd_cfg80211_change_iface( struct wiphy *wiphy,
                 {
                     wlan_hdd_cancel_existing_remain_on_channel(pAdapter);
                 }
+<<<<<<< HEAD
                 if (NL80211_IFTYPE_AP == type)
                 {
                      /* As Loading WLAN Driver one interface being created for p2p device
@@ -12479,6 +12693,31 @@ int __wlan_hdd_cfg80211_change_iface( struct wiphy *wiphy,
                         hdd_close_adapter(pHddCtx, pP2pAdapter, VOS_TRUE);
                     }
                 }
+=======
+
+				if (NL80211_IFTYPE_AP == type)
+                {
+                    /*
+                     * As Loading WLAN Driver one interface being created
+                     * for p2p device address. This will take one HW STA and
+                     * the max number of clients that can connect to softAP
+                     * will be reduced by one. so while changing the interface
+                     * type to NL80211_IFTYPE_AP (SoftAP) remove p2p0 interface
+                     * as it is not required in SoftAP mode.
+                     */
+
+                     // Get P2P Adapter
+                     pP2pAdapter = hdd_get_adapter(pHddCtx,
+                                                  WLAN_HDD_P2P_DEVICE);
+                     if (pP2pAdapter)
+                     {
+                         hdd_stop_adapter(pHddCtx, pP2pAdapter, VOS_TRUE);
+                         hdd_deinit_adapter(pHddCtx, pP2pAdapter, TRUE);
+                         hdd_close_adapter(pHddCtx, pP2pAdapter, VOS_TRUE);
+                     }
+                }
+
+>>>>>>> FETCH_HEAD
                 //Disable IMPS & BMPS for SAP/GO
                 if(VOS_STATUS_E_FAILURE ==
                        hdd_disable_bmps_imps(pHddCtx, WLAN_HDD_P2P_GO))
@@ -12616,6 +12855,20 @@ int __wlan_hdd_cfg80211_change_iface( struct wiphy *wiphy,
            case NL80211_IFTYPE_P2P_CLIENT:
            case NL80211_IFTYPE_ADHOC:
 
+<<<<<<< HEAD
+=======
+                if (pAdapter->device_mode == WLAN_HDD_SOFTAP
+                        && !hdd_get_adapter(pHddCtx, WLAN_HDD_P2P_DEVICE)) {
+                    /*
+                     * The p2p interface was deleted while SoftAP mode was init,
+                     * create that interface now that the SoftAP is going down.
+                     */
+                    pP2pAdapter = hdd_open_adapter(pHddCtx, WLAN_HDD_P2P_DEVICE,
+                                       "p2p%d", wlan_hdd_get_intf_addr(pHddCtx),
+                                       VOS_TRUE);
+                }
+
+>>>>>>> FETCH_HEAD
                 hdd_stop_adapter( pHddCtx, pAdapter, VOS_TRUE );
 #ifdef FEATURE_WLAN_TDLS
 
@@ -16964,8 +17217,13 @@ disconnected:
  * @adapter: Pointer to the HDD adapter
  * @req: Pointer to the structure cfg_connect_params receieved from user space
  *
+<<<<<<< HEAD
  * This function will start reassociation if bssid hint, channel hint and
  * previous bssid parameters are present in the connect request
+=======
+ * This function will start reassociation if prev_bssid is set and bssid/
+ * bssid_hint, channel/channel_hint parameters are present in connect request.
+>>>>>>> FETCH_HEAD
  *
  * Return: success if reassociation is happening
  *         Error code if reassociation is not permitted or not happening
@@ -16975,6 +17233,7 @@ static int wlan_hdd_reassoc_bssid_hint(hdd_adapter_t *adapter,
 				struct cfg80211_connect_params *req)
 {
 	int status = -EPERM;
+<<<<<<< HEAD
 	if (req->bssid_hint && req->channel_hint && req->prev_bssid) {
 		hddLog(VOS_TRACE_LEVEL_INFO,
 			FL("REASSOC Attempt on channel %d to "MAC_ADDRESS_STR),
@@ -16983,6 +17242,27 @@ static int wlan_hdd_reassoc_bssid_hint(hdd_adapter_t *adapter,
 		status  = hdd_reassoc(adapter, req->bssid_hint,
 					req->channel_hint->hw_value,
 					CONNECT_CMD_USERSPACE);
+=======
+	const uint8_t *bssid = NULL;
+	uint16_t channel = 0;
+
+	if (req->bssid)
+		bssid = req->bssid;
+	else if (req->bssid_hint)
+		bssid = req->bssid_hint;
+
+	if (req->channel)
+		channel = req->channel->hw_value;
+	else if (req->channel_hint)
+		channel = req->channel_hint->hw_value;
+
+	if (bssid && channel && req->prev_bssid) {
+		hddLog(VOS_TRACE_LEVEL_INFO,
+			FL("REASSOC Attempt on channel %d to "MAC_ADDRESS_STR),
+			channel, MAC_ADDR_ARRAY(bssid));
+		status = hdd_reassoc(adapter, bssid, channel,
+				     CONNECT_CMD_USERSPACE);
+>>>>>>> FETCH_HEAD
 	}
 	return status;
 }

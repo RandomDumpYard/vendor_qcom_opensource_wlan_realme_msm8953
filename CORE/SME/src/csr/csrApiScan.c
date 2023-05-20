@@ -381,6 +381,13 @@ eHalStatus csrQueueScanRequest( tpAniSirGlobal pMac, tSmeCmd *pScanCmd )
     /* split scan if any one of the following:
      * - STA session is connected and the scan is not a P2P search
      * - any P2P session is connected
+<<<<<<< HEAD
+=======
+     * - STA+SAP. In STA+SAP concurrency, scan requests received on
+     *   STA interface when not in connected state are not split.
+     *   This can result in large time gap between successive beacons
+     *   sent by SAP.
+>>>>>>> FETCH_HEAD
      * Do not split scans if no concurrent infra connections are 
      * active and if the scan is a BG scan triggered by LFR (OR)
      * any scan if LFR is in the middle of a BG scan. Splitting
@@ -388,7 +395,15 @@ eHalStatus csrQueueScanRequest( tpAniSirGlobal pMac, tSmeCmd *pScanCmd )
      * candidates and resulting in disconnects.
      */
 
+<<<<<<< HEAD
     if(csrIsStaSessionConnected(pMac) &&
+=======
+    if (csrIsInfraApStarted(pMac))
+    {
+      nNumChanCombinedConc = 1;
+    }
+    else if(csrIsStaSessionConnected(pMac) &&
+>>>>>>> FETCH_HEAD
        !csrIsP2pSessionConnected(pMac))
     {
       nNumChanCombinedConc = pMac->roam.configParam.nNumStaChanCombinedConc;
@@ -3382,17 +3397,24 @@ eHalStatus csrScanningStateMsgProcessor( tpAniSirGlobal pMac, void *pMsgBuf )
     return (status);
 }
 
+<<<<<<< HEAD
 
 
 void csrCheckNSaveWscIe(tpAniSirGlobal pMac, tSirBssDescription *pNewBssDescr, tSirBssDescription *pOldBssDescr)
 {
     int idx, len;
+=======
+void csrCheckNSaveWscIe(tpAniSirGlobal pMac, tSirBssDescription *pNewBssDescr,tSirBssDescription *pOldBssDescr)
+{
+    int elem_id, len, elem_len;
+>>>>>>> FETCH_HEAD
     tANI_U8 *pbIe;
 
     //If failed to remove, assuming someone else got it.
     if((pNewBssDescr->fProbeRsp != pOldBssDescr->fProbeRsp) &&
        (0 == pNewBssDescr->WscIeLen))
     {
+<<<<<<< HEAD
         idx = 0;
         len = GET_IE_LEN_IN_BSS(pOldBssDescr->length)
               - DOT11F_IE_WSCPROBERES_MIN_LEN - 2;
@@ -3414,6 +3436,37 @@ void csrCheckNSaveWscIe(tpAniSirGlobal pMac, tSirBssDescription *pNewBssDescr, t
             }
             idx += pbIe[1] + 2;
             pbIe += pbIe[1] + 2;
+=======
+        len = GET_IE_LEN_IN_BSS(pOldBssDescr->length);
+        pbIe = (tANI_U8 *)pOldBssDescr->ieFields;
+        //Save WPS IE if it exists
+        pNewBssDescr->WscIeLen = 0;
+        while (len >= 2)
+        {
+            elem_id = pbIe[0];
+            elem_len = pbIe[1];
+            len -= 2;
+            if (elem_len > len) {
+                smsLog(pMac, LOGW, FL("Invalid eid: %d elem_len: %d left: %d"),
+                       elem_id, elem_len, len);
+                return;
+            }
+            if ((elem_id == DOT11F_EID_WSCPROBERES) &&
+                (elem_len >= DOT11F_IE_WSCPROBERES_MIN_LEN) &&
+                ((pbIe[2] == 0x00) && (pbIe[3] == 0x50) && (pbIe[4] == 0xf2) &&
+                (pbIe[5] == 0x04)))
+            {
+                if((elem_len + 2) <= WSCIE_PROBE_RSP_LEN)
+                {
+                    vos_mem_copy(pNewBssDescr->WscIeProbeRsp,
+                                 pbIe, elem_len + 2);
+                    pNewBssDescr->WscIeLen = elem_len + 2;
+                }
+                return;
+            }
+            len -= elem_len;
+            pbIe += (elem_len + 2);
+>>>>>>> FETCH_HEAD
         }
     }
 }
@@ -7278,6 +7331,13 @@ static void csrStaApConcTimerHandler(void *pv)
          * any one of the following:
          * - STA session is connected and the scan is not a P2P search
          * - any P2P session is connected
+<<<<<<< HEAD
+=======
+         * - STA+SAP. In STA+SAP concurrency, scan requests received on
+         *   STA interface when not in connected state are not split.
+         *   This can result in large time gap between successive beacons
+         *   sent by SAP.
+>>>>>>> FETCH_HEAD
          * Do not split scans if no concurrent infra connections are 
          * active and if the scan is a BG scan triggered by LFR (OR)
          * any scan if LFR is in the middle of a BG scan. Splitting
@@ -7285,7 +7345,15 @@ static void csrStaApConcTimerHandler(void *pv)
          * candidates and resulting in disconnects.
          */
 
+<<<<<<< HEAD
         if((csrIsStaSessionConnected(pMac) &&
+=======
+        if (csrIsInfraApStarted(pMac))
+        {
+            nNumChanCombinedConc = 1;
+        }
+        else if((csrIsStaSessionConnected(pMac) &&
+>>>>>>> FETCH_HEAD
            !csrIsP2pSessionConnected(pMac)))
         {
            nNumChanCombinedConc = pMac->roam.configParam.nNumStaChanCombinedConc;

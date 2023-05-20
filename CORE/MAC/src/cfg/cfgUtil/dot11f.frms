@@ -1425,7 +1425,11 @@ IE RSN (EID_RSN)                          // 7.3.2.25
 
 IE RSNOpaque (EID_RSN)                    // 7.3.2.25
 {
+<<<<<<< HEAD
     data[ 6..253 ];
+=======
+    data[ 0..253 ];
+>>>>>>> FETCH_HEAD
 }
 
 IE WAPI (EID_WAPI)                          // 7.3.2.25

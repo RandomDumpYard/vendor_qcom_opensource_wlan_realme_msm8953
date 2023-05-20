@@ -897,10 +897,17 @@ static void hdd_SendFTAssocResponse(struct net_device *dev, hdd_adapter_t *pAdap
     unsigned int len = 0;
     u8 *pFTAssocRsp = NULL;
 
+<<<<<<< HEAD
     if (pCsrRoamInfo->nAssocRspLength == 0)
     {
         hddLog(LOGE,
             "%s: pCsrRoamInfo->nAssocRspLength=%d",
+=======
+    if (pCsrRoamInfo->nAssocRspLength < FT_ASSOC_RSP_IES_OFFSET)
+    {
+        hddLog(LOGE,
+            "%s: Invalid assoc rsp length %d",
+>>>>>>> FETCH_HEAD
             __func__, (int)pCsrRoamInfo->nAssocRspLength);
         return;
     }
@@ -919,6 +926,19 @@ static void hdd_SendFTAssocResponse(struct net_device *dev, hdd_adapter_t *pAdap
         (unsigned int)pFTAssocRsp[0],
         (unsigned int)pFTAssocRsp[1]);
 
+<<<<<<< HEAD
+=======
+    /* Send the Assoc Resp, the supplicant needs this for initial Auth. */
+    len = pCsrRoamInfo->nAssocRspLength - FT_ASSOC_RSP_IES_OFFSET;
+    if (len > IW_GENERIC_IE_MAX) {
+        hddLog(LOGE,
+             "%s: Invalid assoc rsp length %d",
+             __func__, (int)pCsrRoamInfo->nAssocRspLength);
+        return;
+    }
+    wrqu.data.length = len;
+
+>>>>>>> FETCH_HEAD
     // We need to send the IEs to the supplicant.
     buff = kmalloc(IW_GENERIC_IE_MAX, GFP_ATOMIC);
     if (buff == NULL)
@@ -927,9 +947,12 @@ static void hdd_SendFTAssocResponse(struct net_device *dev, hdd_adapter_t *pAdap
         return;
     }
 
+<<<<<<< HEAD
     // Send the Assoc Resp, the supplicant needs this for initial Auth.
     len = pCsrRoamInfo->nAssocRspLength - FT_ASSOC_RSP_IES_OFFSET;
     wrqu.data.length = len;
+=======
+>>>>>>> FETCH_HEAD
     memset(buff, 0, IW_GENERIC_IE_MAX);
     memcpy(buff, pFTAssocRsp, len);
     wireless_send_event(dev, IWEVASSOCRESPIE, &wrqu, buff);
@@ -2169,8 +2192,14 @@ static void hdd_SendReAssocEvent(struct net_device *dev, hdd_adapter_t *pAdapter
         goto done;
     }
 
+<<<<<<< HEAD
     if (pCsrRoamInfo->nAssocRspLength == 0) {
         hddLog(LOGE, "%s: Invalid assoc response length", __func__);
+=======
+    if (pCsrRoamInfo->nAssocRspLength < FT_ASSOC_RSP_IES_OFFSET) {
+        hddLog(LOGE, FL("Invalid assoc response length %d"),
+              pCsrRoamInfo->nAssocRspLength);
+>>>>>>> FETCH_HEAD
         goto done;
     }
 
@@ -2187,6 +2216,13 @@ static void hdd_SendReAssocEvent(struct net_device *dev, hdd_adapter_t *pAdapter
 
     // Send the Assoc Resp, the supplicant needs this for initial Auth.
     len = pCsrRoamInfo->nAssocRspLength - FT_ASSOC_RSP_IES_OFFSET;
+<<<<<<< HEAD
+=======
+    if (len > IW_GENERIC_IE_MAX) {
+        hddLog(LOGE, FL("Invalid Assoc resp length %d"), len);
+        goto done;
+    }
+>>>>>>> FETCH_HEAD
     rspRsnLength = len;
     memcpy(rspRsnIe, pFTAssocRsp, len);
     memset(rspRsnIe + len, 0, IW_GENERIC_IE_MAX - len);
@@ -4818,6 +4854,10 @@ int hdd_set_csr_auth_type ( hdd_adapter_t  *pAdapter, eCsrAuthType RSNAuthType)
     switch( pHddStaCtx->conn_info.authType)
     {
        case eCSR_AUTH_TYPE_OPEN_SYSTEM:
+<<<<<<< HEAD
+=======
+       case eCSR_AUTH_TYPE_AUTOSWITCH:
+>>>>>>> FETCH_HEAD
 #ifdef FEATURE_WLAN_ESE
        case eCSR_AUTH_TYPE_CCKM_WPA:
        case eCSR_AUTH_TYPE_CCKM_RSN:

@@ -8730,13 +8730,17 @@ void WDA_UpdateProbeRspParamsCallback(WDI_Status status, void* pUserData)
  * FUNCTION: WDA_ProcessUpdateProbeRspTemplate
  * Request to WDI to send the probe response template to HAL to update the TPE memory and 
  * send probe response
- */ 
+ */
 VOS_STATUS WDA_ProcessUpdateProbeRspTemplate(tWDA_CbContext *pWDA, 
                                  tSendProbeRespParams *pSendProbeRspParams)
 {
    WDI_Status status = WDI_STATUS_SUCCESS;
    WDI_UpdateProbeRspTemplateParamsType *wdiSendProbeRspParam =
          vos_mem_malloc(sizeof(WDI_UpdateProbeRspTemplateParamsType));
+
+   if(pSendProbeRspParams->probeRespTemplateLen > SCH_MAX_PROBE_RESP_SIZE)
+      pSendProbeRspParams->probeRespTemplateLen = SCH_MAX_PROBE_RESP_SIZE;
+
    VOS_TRACE(VOS_MODULE_ID_WDA, VOS_TRACE_LEVEL_INFO,
                 "------> %s probeRespTemplateLen %d" ,__func__,
                 pSendProbeRspParams->probeRespTemplateLen);

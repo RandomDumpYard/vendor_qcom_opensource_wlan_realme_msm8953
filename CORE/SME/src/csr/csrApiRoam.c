@@ -11469,6 +11469,13 @@ eHalStatus csrRoamLostLink( tpAniSirGlobal pMac, tANI_U32 sessionId, tANI_U32 ty
 
     if(CSR_IS_INFRASTRUCTURE(&pSession->connectedProfile))
     {
+<<<<<<< HEAD
+=======
+        //remove the connected BSS in infrastructure mode
+        csrRoamRemoveConnectedBssFromScanCache(pMac,
+                                               &pSession->connectedProfile);
+
+>>>>>>> FETCH_HEAD
         csrScanStartIdleScan(pMac);
     }
 
@@ -15410,12 +15417,20 @@ eHalStatus csrSendMBSetContextReqMsg( tpAniSirGlobal pMac, tANI_U32 sessionId,
 {
     tSirSmeSetContextReq *pMsg;
     tANI_U16 msgLen;
+<<<<<<< HEAD
     eHalStatus status = eHAL_STATUS_FAILURE;
+=======
+    VOS_STATUS status;
+>>>>>>> FETCH_HEAD
     tAniEdType tmpEdType;
     tAniKeyDirection tmpDirection;
     tANI_U8 *pBuf = NULL;
     tANI_U8 *p = NULL;
     tCsrRoamSession *pSession = CSR_GET_SESSION( pMac, sessionId );
+<<<<<<< HEAD
+=======
+    vos_msg_t msg;
+>>>>>>> FETCH_HEAD
     smsLog( pMac, LOG1, FL("keylength is %d, Encry type is : %d"),
                             keyLength, edType);
     do {
@@ -15485,9 +15500,25 @@ eHalStatus csrSendMBSetContextReqMsg( tpAniSirGlobal pMac, tANI_U32 sessionId,
                 p = pal_set_U16( p, pal_cpu_to_be16(keyLength) );
         if ( keyLength && pKey ) 
             vos_mem_copy(p, pKey, keyLength);
+<<<<<<< HEAD
         status = palSendMBMessage(pMac->hHdd, pMsg);
     } while( 0 );
     return( status );
+=======
+        msg.type = pMsg->messageType;
+        msg.bodyptr = pMsg;
+        msg.bodyval = 0;
+        if (fUnicast)
+            status = vos_mq_post_message_high_pri(VOS_MQ_ID_PE, &msg);
+        else
+            status = vos_mq_post_message(VOS_MQ_ID_PE, &msg);
+        if (!VOS_IS_STATUS_SUCCESS(status)) {
+            vos_mem_free(pMsg);
+            return eHAL_STATUS_FAILURE;
+        }
+    } while( 0 );
+    return eHAL_STATUS_SUCCESS;
+>>>>>>> FETCH_HEAD
 }
 
 eHalStatus csrSendMBStartBssReqMsg( tpAniSirGlobal pMac, tANI_U32 sessionId, eCsrRoamBssType bssType, 
